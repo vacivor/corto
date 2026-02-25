@@ -24,7 +24,16 @@ url = "postgres://user:pass@127.0.0.1:5432/corto"
 
 [logging]
 level = "info"
+
+[redis]
+url = "redis://127.0.0.1:6379"
+ttl_seconds = 300
+null_ttl_seconds = 30
+jitter_seconds = 30
 ```
+
+Redis is optional. When enabled it caches short-url lookups, caches nulls to reduce penetration,
+uses a short lock to mitigate breakdown, and adds TTL jitter to reduce snowball.
 
 ## Run
 ```bash
@@ -46,22 +55,22 @@ curl http://localhost:3000/api/short-urls/{code}
 
 ### Redirect
 ```bash
-curl -I http://localhost:3000/{code}
+curl -I http://localhost:3000/r/{code}
 ```
 
 ### Admin list
 ```bash
-curl "http://localhost:3000/admin/short-urls?page=1&pageSize=20"
+curl "http://localhost:3000/api/admin/short-urls?page=1&pageSize=20"
 ```
 
 ### Admin update
 ```bash
-curl -X PATCH http://localhost:3000/admin/short-urls/{id} \
+curl -X PATCH http://localhost:3000/api/admin/short-urls/{id} \
   -H 'Content-Type: application/json' \
   -d '{"status":0,"expiresAt":""}'
 ```
 
 ### Admin delete
 ```bash
-curl -X DELETE http://localhost:3000/admin/short-urls/{id}
+curl -X DELETE http://localhost:3000/api/admin/short-urls/{id}
 ```

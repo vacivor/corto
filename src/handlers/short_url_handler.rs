@@ -69,7 +69,6 @@ pub async fn get_short_url(
     Path(code): Path<String>,
 ) -> Result<impl IntoResponse, AppError> {
     let model = state.short_url_service.find_by_code(&code).await?;
-    ensure_not_expired(&model)?;
 
     let response = ShortUrlResponse {
         id: model.id,
@@ -96,7 +95,6 @@ pub async fn redirect_short_url(
     Path(code): Path<String>,
 ) -> Result<impl IntoResponse, AppError> {
     let model = state.short_url_service.find_by_code(&code).await?;
-    ensure_not_expired(&model)?;
 
     state
         .short_url_service
@@ -110,7 +108,7 @@ fn build_short_url(base_url: Option<&str>, code: &str) -> Option<String> {
     if base.is_empty() || code.is_empty() {
         return None;
     }
-    Some(format!("{}/{}", base, code))
+    Some(format!("{}/s/{}", base, code))
 }
 
 fn parse_expires_at(input: Option<String>) -> Result<Option<sea_orm::prelude::DateTimeWithTimeZone>, AppError> {
@@ -130,13 +128,4 @@ fn parse_expires_at(input: Option<String>) -> Result<Option<sea_orm::prelude::Da
     })?;
 
     Ok(Some(parsed))
-}
-
-fn ensure_not_expired(model: &crate::models::short_url::Model) -> Result<(), AppError> {
-    if let Some(expires_at) = model.expires_at {
-        if expires_at <= chrono::Utc::now().fixed_offset() {
-            return Err(AppError::gone("short url expired"));
-        }
-    }
-    Ok(())
 }

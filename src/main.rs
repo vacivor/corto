@@ -7,6 +7,7 @@ use crate::services::short_url_service::ShortUrlService;
 use tracing_subscriber::EnvFilter;
 
 mod app;
+mod cache;
 mod common;
 mod config;
 mod db;
@@ -46,8 +47,9 @@ fn normalize_base_url(config: &AppConfig) -> Option<String> {
 
 async fn build_state(config: &AppConfig) -> AppState {
     let db = db::init_db(&config.datasource).await;
+    let cache = build_cache(config).await;
     AppState {
-        short_url_service: ShortUrlService::new(db),
+        short_url_service: ShortUrlService::new(db, cache),
         base_url: normalize_base_url(config),
     }
 }
@@ -68,6 +70,21 @@ fn init_tracing(config: &AppConfig) {
     tracing_subscriber::fmt()
         .with_env_filter(filter)
         .init();
+}
+
+async fn build_cache(config: &AppConfig) -> Option<cache::RedisCache> {
+    let redis_config = config.redis.as_ref()?;
+    let ttl = redis_config.ttl_seconds.unwrap_or(300);
+    let null_ttl = redis_config.null_ttl_seconds.unwrap_or(30);
+    let jitter = redis_config.jitter_seconds.unwrap_or(30);
+
+    match cache::RedisCache::new(&redis_config.url, ttl, null_ttl, jitter).await {
+        Ok(cache) => Some(cache),
+        Err(err) => {
+            tracing::warn!("redis init failed: {}", err);
+            None
+        }
+    }
 }
 
 fn log_server_addresses(socket_addr: SocketAddr) {

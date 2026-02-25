@@ -6,6 +6,7 @@ pub struct AppConfig {
     pub server: ServerConfig,
     pub datasource: DatasourceConfig,
     pub logging: LoggingConfig,
+    pub redis: Option<RedisConfig>,
 }
 
 #[derive(Debug, Deserialize, Clone)]
@@ -28,6 +29,14 @@ pub struct DatasourceConfig {
 #[derive(Debug, Deserialize, Clone)]
 pub struct LoggingConfig {
     pub level: String,
+}
+
+#[derive(Debug, Deserialize, Clone)]
+pub struct RedisConfig {
+    pub url: String,
+    pub ttl_seconds: Option<u64>,
+    pub null_ttl_seconds: Option<u64>,
+    pub jitter_seconds: Option<u64>,
 }
 
 pub fn load_configuration() -> Result<AppConfig, config::ConfigError> {

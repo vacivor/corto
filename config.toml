@@ -9,3 +9,9 @@ url = "postgres://postgres:postgres@192.168.50.141:5432/corto"
 
 [logging]
 level = "info"
+
+[redis]
+url = "redis://192.168.50.144:6379"
+ttl_seconds = 300
+null_ttl_seconds = 30
+jitter_seconds = 30

@@ -54,6 +54,15 @@ pub struct ListResponse {
     pub items: Vec<ShortUrlAdminResponse>,
 }
 
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct StatsResponse {
+    pub total: u64,
+    pub active_count: u64,
+    pub disabled_count: u64,
+    pub expired_count: u64,
+}
+
 pub async fn list_short_urls(
     State(state): State<AppState>,
     Query(query): Query<ListQuery>,
@@ -88,6 +97,18 @@ pub async fn list_short_urls(
         page,
         page_size,
         items,
+    }))
+}
+
+pub async fn short_url_stats(
+    State(state): State<AppState>,
+) -> Result<impl IntoResponse, AppError> {
+    let stats = state.short_url_service.short_url_stats().await?;
+    Ok(Json(StatsResponse {
+        total: stats.total,
+        active_count: stats.active_count,
+        disabled_count: stats.disabled_count,
+        expired_count: stats.expired_count,
     }))
 }
 
